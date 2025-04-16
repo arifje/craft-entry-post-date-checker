@@ -1,0 +1,15 @@
+{# @var plugin \arjanbrinkman\craftentrypostdatechecker\Plugin #}
+{# @var settings \arjanbrinkman\craftentrypostdatechecker\models\Settings #}
+
+{% import '_includes/forms.twig' as forms %}
+
+{{ forms.textField({
+	label: 'Tijdsspanne (in minuten)',
+	instructions: 'Geef aan hoeveel minuten rondom de postdatum gecontroleerd moet worden op overlappende artikelen.',
+	id: 'timeScopeMinutes',
+	name: 'timeScopeMinutes',
+	value: settings.timeScopeMinutes,
+	type: 'number',
+	size: 4,
+	min: 1
+}) }}
