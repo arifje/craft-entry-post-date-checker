@@ -4,5 +4,5 @@ This plugin checks entries after save. When an entry is scheduled and overlappin
 
 ## Requirements
 
-This plugin requires Craft CMS 5.5.0 or later, and PHP 8.2 or later.
+This plugin requires Craft CMS 4.0.0 or later or 5.0.0 or later, and PHP 8.2 or later.
 
