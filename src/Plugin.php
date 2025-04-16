@@ -97,7 +97,6 @@ class Plugin extends BasePlugin
 		);
 	}
 
-	
 	private function checkForConflicts(Entry $entry): ?string
 	{
 		$postDate = $entry->postDate;
@@ -110,30 +109,27 @@ class Plugin extends BasePlugin
 		$timeScopeMinutes = (int) $this->getSettings()->timeScopeMinutes ?: 15;
 		$scopeInSeconds = $timeScopeMinutes * 60;
 	
-		$entries = Entry::find()
+		$startRange = clone $postDate;
+		$startRange->modify('-' . $scopeInSeconds . ' seconds');
+	
+		$endRange = clone $postDate;
+		$endRange->modify('+' . $scopeInSeconds . ' seconds');
+	
+		$conflictingEntry = Entry::find()
 			->sectionId($sectionId)
 			->id(['not', $entryId])
+			->postDate(['and', ">= {$startRange->format('Y-m-d H:i:s')}", "<= {$endRange->format('Y-m-d H:i:s')}"])
 			->status(null)
-			->all();
+			->one();
 	
-		foreach ($entries as $otherEntry) {
-			if (!$otherEntry->postDate) {
-				continue;
-			}
-	
-			$diffInSeconds = abs($postDate->getTimestamp() - $otherEntry->postDate->getTimestamp());
-	
-			if ($diffInSeconds <= $scopeInSeconds) {
-				return Craft::t('app', 'Er is al een ander artikel ingepland op {start}. <br>We raden je aan om minimaal een half uur tussen artikelen te houden, tenzij het brekend nieuws is.', [
-					'start' => $otherEntry->postDate->format('H:i'),
-					'date' => $postDate->format('d-m-Y'),
-				]);
-			}
+		if ($conflictingEntry && $conflictingEntry->postDate) {
+			return Craft::t('app', 'Er is al een ander artikel ingepland op {start}. <br>We raden je aan om minimaal een half uur tussen artikelen te houden, tenzij het brekend nieuws is.', [
+				'start' => $conflictingEntry->postDate->format('H:i'),
+				'date' => $postDate->format('d-m-Y'),
+			]);
 		}
 	
-		return null; // No conflicts
+		return null;
 	}
-
-
 
 }
