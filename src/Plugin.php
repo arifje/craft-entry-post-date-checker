@@ -48,18 +48,14 @@ class Plugin extends BasePlugin
 
 		if (Craft::$app->getRequest()->getIsCpRequest()) {
 			Craft::$app->getView()->registerAssetBundle(PostDateCheckerAsset::class);
-
+			
 			$message = Craft::$app->getSession()->getFlash('entryPostDateConflict');
 			if ($message) {
 				Craft::$app->getView()->registerJs("window.entryPostDateConflict = " . json_encode($message) . ";", View::POS_HEAD);
 			}
 		}
-
-        if (version_compare(Craft::$app->getVersion(), '5.0', '>=')) {
-			$this->attachEventHandlersCraft5();
-		} else {
-			$this->attachEventHandlersCraft4();
-		}
+		
+		$this->attachEventHandlers();
 
         // Any code that creates an element query or loads Twig should be deferred until
         // after Craft is fully initialized, to avoid conflicts with other plugins/modules
@@ -80,39 +76,19 @@ class Plugin extends BasePlugin
             'settings' => $this->getSettings(),
         ]);
     }
-
-	private function attachEventHandlersCraft4(): void
+	
+	private function attachEventHandlers(): void
 	{
 		Event::on(
 			Entry::class,
 			Entry::EVENT_AFTER_SAVE,
 			function (Event $event) {
 				$entry = $event->sender;
-
+	
 				if (!$entry->postDate || !$entry->enabled || $entry->getIsDraft() || $entry->getIsRevision()) {
 					return;
 				}
-
-				$message = $this->checkForConflicts($entry);
-				if ($message) {
-					Craft::$app->getSession()->setNotice($message);
-				}
-			}
-		);
-	}
-
-	private function attachEventHandlersCraft5(): void
-	{
-		Event::on(
-			Entry::class,
-			Entry::EVENT_AFTER_SAVE,
-			function (Event $event) {
-				$entry = $event->sender;
-
-				if (!$entry->postDate || !$entry->enabled || $entry->getIsDraft() || $entry->getIsRevision()) {
-					return;
-				}
-
+	
 				$message = $this->checkForConflicts($entry);
 				if ($message && Craft::$app->request->getIsCpRequest()) {
 					Craft::$app->getSession()->setFlash('entryPostDateConflict', $message);
@@ -121,32 +97,32 @@ class Plugin extends BasePlugin
 		);
 	}
 
-
+	
 	private function checkForConflicts(Entry $entry): ?string
 	{
 		$postDate = $entry->postDate;
 		if (!$postDate) {
 			return null;
 		}
-
+	
 		$entryId = $entry->id;
 		$sectionId = $entry->sectionId;
 		$timeScopeMinutes = (int) $this->getSettings()->timeScopeMinutes ?: 15;
 		$scopeInSeconds = $timeScopeMinutes * 60;
-
+	
 		$entries = Entry::find()
 			->sectionId($sectionId)
 			->id(['not', $entryId])
 			->status(null)
 			->all();
-
+	
 		foreach ($entries as $otherEntry) {
 			if (!$otherEntry->postDate) {
 				continue;
 			}
-
+	
 			$diffInSeconds = abs($postDate->getTimestamp() - $otherEntry->postDate->getTimestamp());
-
+	
 			if ($diffInSeconds <= $scopeInSeconds) {
 				return Craft::t('app', 'Er is al een ander artikel ingepland op {start}. <br>We raden je aan om minimaal een half uur tussen artikelen te houden, tenzij het brekend nieuws is.', [
 					'start' => $otherEntry->postDate->format('H:i'),
@@ -154,7 +130,7 @@ class Plugin extends BasePlugin
 				]);
 			}
 		}
-
+	
 		return null; // No conflicts
 	}
 

@@ -19,7 +19,7 @@ function showConflictModal(message) {
 
 	$container.append(`
 		<div style="padding: 20px">
-			<h1 style="margin-top: 0">Let op!</h1>
+			<h1 style="margin-top: 0">Waarchuwing</h1>
 			<p>${message}</p>
 			<div class="buttons" style="text-align: right">
 				<div class="btn submit" style=" margin-top: 5px;" tabindex="0">Oké, begrepen</div>
