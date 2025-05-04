@@ -2,7 +2,7 @@
   "name": "arjan-brinkman/craft-entry-post-date-checker",
   "description": "This plugin checks entries after save. When an entry is scheduled and overlapping another entry's date and time (within a scope of X minutes or hours), the user gets notified about it. The goal is to prevent users publishing entries on the same date and time.",
   "type": "craft-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "require": {
     "php": ">=8.2",
     "craftcms/cms": "^4.0.0|^5.0.0"

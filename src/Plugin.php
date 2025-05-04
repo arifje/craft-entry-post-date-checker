@@ -119,7 +119,7 @@ class Plugin extends BasePlugin
 			->sectionId($sectionId)
 			->id(['not', $entryId])
 			->postDate(['and', ">= {$startRange->format('Y-m-d H:i:s')}", "<= {$endRange->format('Y-m-d H:i:s')}"])
-			->status(null)
+			->status('enabled')
 			->one();
 	
 		if ($conflictingEntry && $conflictingEntry->postDate) {
