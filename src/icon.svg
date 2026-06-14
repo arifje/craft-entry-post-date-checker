@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Entry PostDate Checker</title>
+  <desc id="desc">A calendar with a checkmark and timing warning.</desc>
+  <defs>
+    <linearGradient id="bg" x1="88" y1="64" x2="424" y2="448" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#177f9f"/>
+      <stop offset="0.52" stop-color="#245ca8"/>
+      <stop offset="1" stop-color="#31336f"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="144" y1="132" x2="368" y2="388" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e8f3f5"/>
+    </linearGradient>
+    <filter id="shadow" x="52" y="48" width="408" height="432" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#0f1d33" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <rect x="112" y="108" width="288" height="316" rx="36" fill="url(#panel)"/>
+    <path d="M112 156c0-26.5 21.5-48 48-48h192c26.5 0 48 21.5 48 48v42H112v-42z" fill="#ffb23f"/>
+    <rect x="158" y="74" width="34" height="82" rx="17" fill="#1e3358"/>
+    <rect x="320" y="74" width="34" height="82" rx="17" fill="#1e3358"/>
+    <path d="M171 256h46v46h-46v-46zm62 0h46v46h-46v-46zm62 0h46v46h-46v-46z" fill="#c9dae0"/>
+    <path d="M171 318h46v46h-46v-46zm62 0h46v46h-46v-46z" fill="#c9dae0"/>
+    <circle cx="328" cy="342" r="74" fill="#1f9d78"/>
+    <path d="M296 343l23 24 47-58" fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <path d="M409 391l35 61h-70l35-61z" fill="#ffcf5a"/>
+  <path d="M409 410v20" stroke="#2f2a1d" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="409" cy="443" r="5.5" fill="#2f2a1d"/>
+</svg>

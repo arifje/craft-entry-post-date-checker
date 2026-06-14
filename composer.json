@@ -2,7 +2,7 @@
   "name": "arjan-brinkman/craft-entry-post-date-checker",
   "description": "Warns Craft CMS editors when a live or scheduled entry is saved too close to another entry in the same section and site.",
   "type": "craft-plugin",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "require": {
     "php": ">=8.2",
     "craftcms/cms": "^4.0.0 || ^5.0.0"

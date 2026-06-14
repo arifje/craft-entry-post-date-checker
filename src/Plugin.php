@@ -54,6 +54,12 @@ class Plugin extends BasePlugin
         $view = Craft::$app->getView();
         $view->registerAssetBundle(PostDateCheckerAsset::class);
 
+        $defaults = [
+            'title' => Craft::t('_entry-post-date-checker', 'Warning'),
+            'buttonLabel' => Craft::t('_entry-post-date-checker', 'Got it'),
+        ];
+        $view->registerJs('window.entryPostDateCheckerDefaults = ' . Json::htmlEncode($defaults) . ';', View::POS_HEAD);
+
         $conflict = Craft::$app->getSession()->getFlash('entryPostDateConflict');
         if ($conflict !== null) {
             $view->registerJs('window.entryPostDateConflict = ' . Json::htmlEncode($conflict) . ';', View::POS_HEAD);
@@ -143,19 +149,19 @@ class Plugin extends BasePlugin
     {
         $minimumGapMinutes = $timeScopeMinutes * 2;
         $minimumGap = $minimumGapMinutes === 1
-            ? Craft::t('_entry-post-date-checker', '1 minuut')
-            : Craft::t('_entry-post-date-checker', '{minutes} minuten', ['minutes' => $minimumGapMinutes]);
+            ? Craft::t('_entry-post-date-checker', '1 minute')
+            : Craft::t('_entry-post-date-checker', '{minutes} minutes', ['minutes' => $minimumGapMinutes]);
 
         return [
-            'title' => Craft::t('_entry-post-date-checker', 'Waarschuwing'),
-            'message' => Craft::t('_entry-post-date-checker', 'Er is al een ander artikel ingepland op {date} om {time}.', [
+            'title' => Craft::t('_entry-post-date-checker', 'Warning'),
+            'message' => Craft::t('_entry-post-date-checker', 'Another entry is already scheduled for {date} at {time}.', [
                 'date' => $conflictingEntry->postDate->format('d-m-Y'),
                 'time' => $conflictingEntry->postDate->format('H:i'),
             ]),
-            'recommendation' => Craft::t('_entry-post-date-checker', 'We raden je aan om minimaal {gap} tussen artikelen te houden, tenzij het brekend nieuws is.', [
+            'recommendation' => Craft::t('_entry-post-date-checker', 'We recommend keeping at least {gap} between entries, unless it is breaking news.', [
                 'gap' => $minimumGap,
             ]),
-            'buttonLabel' => Craft::t('_entry-post-date-checker', 'Oké, begrepen'),
+            'buttonLabel' => Craft::t('_entry-post-date-checker', 'Got it'),
         ];
     }
 }

@@ -43,19 +43,21 @@ function showConflictModal(conflict) {
 }
 
 function normalizeConflictPayload(conflict) {
+	const defaults = window.entryPostDateCheckerDefaults || {};
+
 	if (typeof conflict === 'string') {
 		return {
-			title: 'Waarschuwing',
+			title: defaults.title || 'Warning',
 			message: conflict.replace(/<br\s*\/?>/gi, '\n'),
 			recommendation: '',
-			buttonLabel: 'Oké, begrepen'
+			buttonLabel: defaults.buttonLabel || 'Got it'
 		};
 	}
 
 	return {
-		title: conflict.title || 'Waarschuwing',
+		title: conflict.title || defaults.title || 'Warning',
 		message: conflict.message || '',
 		recommendation: conflict.recommendation || '',
-		buttonLabel: conflict.buttonLabel || 'Oké, begrepen'
+		buttonLabel: conflict.buttonLabel || defaults.buttonLabel || 'Got it'
 	};
 }

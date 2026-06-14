@@ -3,9 +3,23 @@
 
 {% import '_includes/forms.twig' as forms %}
 
+<div class="readable">
+	<h2>{{ 'Entry PostDate Checker'|t('_entry-post-date-checker') }}</h2>
+	<p>{{ 'This plugin warns editors when a live or scheduled entry is saved too close to another live or scheduled entry.'|t('_entry-post-date-checker') }}</p>
+
+	<h3>{{ 'What gets checked?'|t('_entry-post-date-checker') }}</h3>
+	<ul>
+		<li>{{ 'Only control panel saves are checked.'|t('_entry-post-date-checker') }}</li>
+		<li>{{ 'Entries are compared within the same section and site.'|t('_entry-post-date-checker') }}</li>
+		<li>{{ 'Drafts, revisions, disabled entries, and expired entries are ignored.'|t('_entry-post-date-checker') }}</li>
+	</ul>
+</div>
+
+<hr>
+
 {{ forms.textField({
-	label: 'Tijdsspanne (in minuten)',
-	instructions: 'Geef aan hoeveel minuten rondom de postdatum gecontroleerd moet worden op overlappende artikelen.',
+	label: 'Time scope (in minutes)'|t('_entry-post-date-checker'),
+	instructions: 'The number of minutes before and after the entry post date that should be checked for conflicts.'|t('_entry-post-date-checker'),
 	id: 'timeScopeMinutes',
 	name: 'timeScopeMinutes',
 	value: settings.timeScopeMinutes,
@@ -14,3 +28,14 @@
 	size: 4,
 	min: 1
 }) }}
+
+<p class="light">
+	{{ 'Example: a 15-minute scope checks 15 minutes before and 15 minutes after the saved post date, and recommends at least 30 minutes between entries.'|t('_entry-post-date-checker') }}
+</p>
+
+<p class="light">
+	{{ 'Current setting: checks {scope} minutes before and after the saved post date, recommending at least {gap} minutes between entries.'|t('_entry-post-date-checker', {
+		scope: settings.timeScopeMinutes,
+		gap: settings.timeScopeMinutes * 2
+	}) }}
+</p>
