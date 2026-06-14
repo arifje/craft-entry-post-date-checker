@@ -1,8 +1,11 @@
 # Entry PostDate Checker
 
-This plugin checks entries after save. When an entry is scheduled and overlapping another entry's date and time (within a scope of X minutes or hours), the user gets notified about it. The goal is to prevent users publishing entries on the same date and time.
+Entry PostDate Checker warns Craft CMS editors when a live or scheduled entry is saved too close to another live or scheduled entry in the same section and site.
 
 ## Requirements
 
-This plugin requires Craft CMS 4.0.0 or later or 5.0.0 or later, and PHP 8.2 or later.
+This plugin requires Craft CMS 4.x or 5.x, and PHP 8.2 or later.
 
+## Settings
+
+Use the plugin settings screen to configure the number of minutes around an entry's post date that should be checked for conflicts. For example, a 15-minute scope warns editors when another entry is scheduled within 15 minutes before or after the saved entry.

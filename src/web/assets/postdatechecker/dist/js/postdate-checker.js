@@ -1,39 +1,61 @@
 (function () {
 	function checkAndShow() {
-		if (typeof Craft !== 'undefined' && Craft.cp) {
-			if (window.entryPostDateConflict) {
-				showConflictModal(window.entryPostDateConflict);
-			}
-		} else {
+		if (typeof Craft === 'undefined' || !Craft.cp || typeof Garnish === 'undefined') {
 			requestAnimationFrame(checkAndShow);
+			return;
+		}
+
+		if (window.entryPostDateConflict) {
+			showConflictModal(window.entryPostDateConflict);
+			window.entryPostDateConflict = null;
 		}
 	}
 
 	checkAndShow();
 })();
 
-function showConflictModal(message) {
+function showConflictModal(conflict) {
+	const payload = normalizeConflictPayload(conflict);
 	const $modal = $('<div class="modal fitted" role="dialog" aria-modal="true"></div>').appendTo(Garnish.$bod);
-	const $shade = $('<div class="modal-shade"></div>').appendTo(Garnish.$bod);
 	const $container = $('<div class="modal-content"></div>').appendTo($modal);
+	const $body = $('<div></div>').css('padding', '20px').appendTo($container);
 
-	$container.append(`
-		<div style="padding: 20px">
-			<h1 style="margin-top: 0">Waarchuwing</h1>
-			<p>${message}</p>
-			<div class="buttons" style="text-align: right">
-				<div class="btn submit" style=" margin-top: 5px;" tabindex="0">Oké, begrepen</div>
-			</div>
-		</div>
-	`);
+	$('<h1></h1>').css('margin-top', 0).text(payload.title).appendTo($body);
+	$('<p></p>').text(payload.message).appendTo($body);
+
+	if (payload.recommendation) {
+		$('<p></p>').text(payload.recommendation).appendTo($body);
+	}
+
+	const $buttons = $('<div class="buttons"></div>').css('text-align', 'right').appendTo($body);
+	const $button = $('<button type="button" class="btn submit"></button>')
+		.css('margin-top', '5px')
+		.text(payload.buttonLabel)
+		.appendTo($buttons);
 
 	const modal = new Garnish.Modal($modal, {
-		shadeClass: 'modal-shade',
 		onHide: () => {
 			$modal.remove();
-			$shade.remove();
 		}
 	});
 
-	$modal.find('.btn.submit').on('click', () => modal.hide());
+	$button.on('click', () => modal.hide());
+}
+
+function normalizeConflictPayload(conflict) {
+	if (typeof conflict === 'string') {
+		return {
+			title: 'Waarschuwing',
+			message: conflict.replace(/<br\s*\/?>/gi, '\n'),
+			recommendation: '',
+			buttonLabel: 'Oké, begrepen'
+		};
+	}
+
+	return {
+		title: conflict.title || 'Waarschuwing',
+		message: conflict.message || '',
+		recommendation: conflict.recommendation || '',
+		buttonLabel: conflict.buttonLabel || 'Oké, begrepen'
+	};
 }

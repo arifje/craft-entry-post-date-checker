@@ -3,24 +3,16 @@
 namespace arjanbrinkman\craftentrypostdatechecker;
 
 use Craft;
-
+use DateTimeInterface;
 use arjanbrinkman\craftentrypostdatechecker\models\Settings;
 use arjanbrinkman\craftentrypostdatechecker\web\assets\postdatechecker\PostDateCheckerAsset;
-
 use craft\base\Model;
 use craft\base\Plugin as BasePlugin;
-
 use craft\elements\Entry;
-use craft\helpers\ElementHelper;
+use craft\events\ModelEvent;
+use craft\helpers\Json;
 use craft\web\View;
-use craft\helpers\App;
-use craft\events\TemplateEvent;
-
 use yii\base\Event;
-
-use DateTime;
-use DateInterval;
-use yii\base\ModelEvent;
 
 /**
  * Entry PostDate Checker plugin
@@ -33,35 +25,15 @@ class Plugin extends BasePlugin
     public string $schemaVersion = '1.0.0';
     public bool $hasCpSettings = true;
 
-    public static function config(): array
-    {
-        return [
-            'components' => [
-                // Define component configs here...
-            ],
-        ];
-    }
-
     public function init(): void
     {
         parent::init();
 
-		if (Craft::$app->getRequest()->getIsCpRequest()) {
-			Craft::$app->getView()->registerAssetBundle(PostDateCheckerAsset::class);
-			
-			$message = Craft::$app->getSession()->getFlash('entryPostDateConflict');
-			if ($message) {
-				Craft::$app->getView()->registerJs("window.entryPostDateConflict = " . json_encode($message) . ";", View::POS_HEAD);
-			}
-		}
-		
-		$this->attachEventHandlers();
+        if (Craft::$app->getRequest()->getIsCpRequest()) {
+            $this->registerCpAssets();
+        }
 
-        // Any code that creates an element query or loads Twig should be deferred until
-        // after Craft is fully initialized, to avoid conflicts with other plugins/modules
-        Craft::$app->onInit(function() {
-            // ...
-        });
+        $this->attachEventHandlers();
     }
 
     protected function createSettingsModel(): ?Model
@@ -76,60 +48,114 @@ class Plugin extends BasePlugin
             'settings' => $this->getSettings(),
         ]);
     }
-	
-	private function attachEventHandlers(): void
-	{
-		Event::on(
-			Entry::class,
-			Entry::EVENT_AFTER_SAVE,
-			function (Event $event) {
-				$entry = $event->sender;
-	
-				if (!$entry->postDate || !$entry->enabled || $entry->getIsDraft() || $entry->getIsRevision()) {
-					return;
-				}
-	
-				$message = $this->checkForConflicts($entry);
-				if ($message && Craft::$app->request->getIsCpRequest()) {
-					Craft::$app->getSession()->setFlash('entryPostDateConflict', $message);
-				}
-			}
-		);
-	}
 
-	private function checkForConflicts(Entry $entry): ?string
-	{
-		$postDate = $entry->postDate;
-		if (!$postDate) {
-			return null;
-		}
-	
-		$entryId = $entry->id;
-		$sectionId = $entry->sectionId;
-		$timeScopeMinutes = (int) $this->getSettings()->timeScopeMinutes ?: 15;
-		$scopeInSeconds = $timeScopeMinutes * 60;
-	
-		$startRange = clone $postDate;
-		$startRange->modify('-' . $scopeInSeconds . ' seconds');
-	
-		$endRange = clone $postDate;
-		$endRange->modify('+' . $scopeInSeconds . ' seconds');
-	
-		$conflictingEntry = Entry::find()
-			->sectionId($sectionId)
-			->id(['not', $entryId])
-			->postDate(['and', ">= {$startRange->format('Y-m-d H:i:s')}", "<= {$endRange->format('Y-m-d H:i:s')}"])
-			->status('enabled')
-			->one();
-	
-		if ($conflictingEntry && $conflictingEntry->postDate) {
-			return Craft::t('app', 'Er is al een ander artikel ingepland op {start}. <br>We raden je aan om minimaal een half uur tussen artikelen te houden, tenzij het brekend nieuws is.', [
-				'start' => $conflictingEntry->postDate->format('H:i'),
-				'date' => $postDate->format('d-m-Y'),
-			]);
-		}
-	
-		return null;
-	}
+    private function registerCpAssets(): void
+    {
+        $view = Craft::$app->getView();
+        $view->registerAssetBundle(PostDateCheckerAsset::class);
 
+        $conflict = Craft::$app->getSession()->getFlash('entryPostDateConflict');
+        if ($conflict !== null) {
+            $view->registerJs('window.entryPostDateConflict = ' . Json::htmlEncode($conflict) . ';', View::POS_HEAD);
+        }
+    }
+
+    private function attachEventHandlers(): void
+    {
+        Event::on(
+            Entry::class,
+            Entry::EVENT_AFTER_SAVE,
+            function (ModelEvent $event): void {
+                if (!Craft::$app->getRequest()->getIsCpRequest()) {
+                    return;
+                }
+
+                $entry = $event->sender;
+                if (!$entry instanceof Entry || !$this->shouldCheckEntry($entry)) {
+                    return;
+                }
+
+                $conflict = $this->checkForConflicts($entry);
+                if ($conflict !== null) {
+                    Craft::$app->getSession()->setFlash('entryPostDateConflict', $conflict);
+                }
+            }
+        );
+    }
+
+    private function shouldCheckEntry(Entry $entry): bool
+    {
+        return (
+            $entry->postDate !== null &&
+            $entry->sectionId !== null &&
+            $entry->siteId !== null &&
+            $entry->enabled &&
+            $entry->getEnabledForSite() &&
+            !$entry->getIsDraft() &&
+            !$entry->getIsRevision()
+        );
+    }
+
+    /**
+     * @return array{title: string, message: string, recommendation: string, buttonLabel: string}|null
+     */
+    private function checkForConflicts(Entry $entry): ?array
+    {
+        $postDate = $entry->postDate;
+        if (!$postDate) {
+            return null;
+        }
+
+        $timeScopeMinutes = max(1, (int)$this->getSettings()->timeScopeMinutes);
+        $scopeInSeconds = $timeScopeMinutes * 60;
+
+        $startRange = clone $postDate;
+        $startRange->modify("-$scopeInSeconds seconds");
+
+        $endRange = clone $postDate;
+        $endRange->modify("+$scopeInSeconds seconds");
+
+        $conflictingEntry = Entry::find()
+            ->sectionId($entry->sectionId)
+            ->siteId($entry->siteId)
+            ->id(['not', $entry->id])
+            ->postDate([
+                'and',
+                sprintf('>= %s', $startRange->format(DateTimeInterface::ATOM)),
+                sprintf('<= %s', $endRange->format(DateTimeInterface::ATOM)),
+            ])
+            ->status([Entry::STATUS_LIVE, Entry::STATUS_PENDING])
+            ->drafts(false)
+            ->revisions(false)
+            ->one();
+
+        if (!$conflictingEntry instanceof Entry || !$conflictingEntry->postDate) {
+            return null;
+        }
+
+        return $this->createConflictPayload($conflictingEntry, $timeScopeMinutes);
+    }
+
+    /**
+     * @return array{title: string, message: string, recommendation: string, buttonLabel: string}
+     */
+    private function createConflictPayload(Entry $conflictingEntry, int $timeScopeMinutes): array
+    {
+        $minimumGapMinutes = $timeScopeMinutes * 2;
+        $minimumGap = $minimumGapMinutes === 1
+            ? Craft::t('_entry-post-date-checker', '1 minuut')
+            : Craft::t('_entry-post-date-checker', '{minutes} minuten', ['minutes' => $minimumGapMinutes]);
+
+        return [
+            'title' => Craft::t('_entry-post-date-checker', 'Waarschuwing'),
+            'message' => Craft::t('_entry-post-date-checker', 'Er is al een ander artikel ingepland op {date} om {time}.', [
+                'date' => $conflictingEntry->postDate->format('d-m-Y'),
+                'time' => $conflictingEntry->postDate->format('H:i'),
+            ]),
+            'recommendation' => Craft::t('_entry-post-date-checker', 'We raden je aan om minimaal {gap} tussen artikelen te houden, tenzij het brekend nieuws is.', [
+                'gap' => $minimumGap,
+            ]),
+            'buttonLabel' => Craft::t('_entry-post-date-checker', 'Oké, begrepen'),
+        ];
+    }
 }

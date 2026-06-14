@@ -2,7 +2,6 @@
 
 namespace arjanbrinkman\craftentrypostdatechecker\web\assets\postdatechecker;
 
-use Craft;
 use craft\web\AssetBundle;
 use craft\web\assets\cp\CpAsset;
 
@@ -11,20 +10,16 @@ use craft\web\assets\cp\CpAsset;
  */
 class PostDateCheckerAsset extends AssetBundle
 {
-	public function init()
-	{
-		$this->sourcePath = __DIR__ . '/dist';
-		$this->depends = [
-			CpAsset::class,
-		];
-		$this->js = [
-			'js/postdate-checker.js'
-		];
-		$this->css = [
-			//'css/style.css'
-		];
-		
-		parent::init();
-	}
-	
+    public function init(): void
+    {
+        $this->sourcePath = __DIR__ . '/dist';
+        $this->depends = [
+            CpAsset::class,
+        ];
+        $this->js = [
+            'js/postdate-checker.js',
+        ];
+
+        parent::init();
+    }
 }
